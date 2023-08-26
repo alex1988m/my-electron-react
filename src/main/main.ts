@@ -9,11 +9,14 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import fs from 'fs/promises';
+import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
+
+let cachedFilepath: undefined | string = undefined;
 
 class AppUpdater {
   constructor() {
@@ -29,6 +32,31 @@ ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
   console.log(msgTemplate(arg));
   event.reply('ipc-example', msgTemplate('pong'));
+});
+
+ipcMain.on('save', async (event, text) => {
+  try {
+    if (!cachedFilepath) throw new Error('Should invoke save with dialog!');
+    await fs.writeFile(cachedFilepath, text);
+  } catch (e: unknown) {
+    throw new Error(`Unable to save to file!\n${JSON.stringify(e)}`);
+  }
+});
+
+ipcMain.on('first-save', async (event, text) => {
+  try {
+    if (!mainWindow) throw new Error('Window is not opened!');
+    const { filePath } = await dialog.showSaveDialog(mainWindow, {
+      defaultPath: 'text.txt',
+    });
+    if (!filePath) throw new Error('File path is not defined!');
+    cachedFilepath = filePath;
+    await fs.writeFile(filePath, text);
+    event.reply('save-state', 'success');
+  } catch (e: unknown) {
+    event.reply('save-state', 'fail');
+    console.error(`Unable to save to file!\n${JSON.stringify(e)}`);
+  }
 });
 
 if (process.env.NODE_ENV === 'production') {
