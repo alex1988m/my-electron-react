@@ -16,7 +16,7 @@ import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 
-let cachedFilepath: undefined | string = undefined;
+let cachedFilepath: undefined | string;
 
 class AppUpdater {
   constructor() {
@@ -101,7 +101,7 @@ const createWindow = async () => {
     show: false,
     width: 1024,
     height: 728,
-    frame: false,
+    // frame: false,
     icon: getAssetPath('icon.png'),
     webPreferences: {
       preload: app.isPackaged
