@@ -35,8 +35,7 @@ function MainWindow() {
     setText(e.target.value);
   };
   window.electron.ipcRenderer.on('save-state', (state) => {
-    if (state === 'success') setSaveState('saved');
-    if (state === 'fail') setSaveState('fail');
+    setSaveState('saved');
   });
   return (
     <div>
